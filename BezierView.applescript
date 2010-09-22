@@ -1,5 +1,5 @@
 -- BezierView.applescript
--- PressureCurve
+-- PenPressurizer
 
 -- Created by Eric Nitardy on 8/25/10.
 -- Copyright 2010.
@@ -11,7 +11,7 @@ property NSAffineTransform : class "NSAffineTransform"
 property NSBezierPath : class "NSBezierPath"
 property NSColor : class "NSColor"
 
-property PenTabletDriverName : "TabletDriver"
+property PenTabletDriverName : "PenTabletDriver"
 
 script BezierView
 	property parent : class "NSView"
@@ -313,7 +313,7 @@ script BezierView
 		
 		do shell script "killall " & quoted form of PenTabletDriverName
 		delay 0.1
-		tell application "TabletDriver" to launch
+		tell application PenTabletDriverName to launch
 		
 	end resetTabletDriver
 	

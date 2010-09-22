@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1DDD58160DA1D0A300B32029 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58140DA1D0A300B32029 /* MainMenu.xib */; };
-		3B92A9F90F6ED2CB0023785B /* PressureCurveAppDelegate.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 3B92A9F80F6ED2CB0023785B /* PressureCurveAppDelegate.applescript */; };
+		3B92A9F90F6ED2CB0023785B /* PenPressurizerAppDelegate.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 3B92A9F80F6ED2CB0023785B /* PenPressurizerAppDelegate.applescript */; };
 		3BC3FB040ED20C27004AC079 /* AppleScriptObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BC3FB030ED20C27004AC079 /* AppleScriptObjC.framework */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -25,7 +25,7 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* PenPressurizer_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PenPressurizer_Prefix.pch; sourceTree = "<group>"; };
-		3B92A9F80F6ED2CB0023785B /* PressureCurveAppDelegate.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; path = PressureCurveAppDelegate.applescript; sourceTree = "<group>"; };
+		3B92A9F80F6ED2CB0023785B /* PenPressurizerAppDelegate.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; path = PenPressurizerAppDelegate.applescript; sourceTree = "<group>"; };
 		3BC3FB030ED20C27004AC079 /* AppleScriptObjC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppleScriptObjC.framework; path = /System/Library/Frameworks/AppleScriptObjC.framework; sourceTree = "<absolute>"; };
 		8D1107310486CEB800E47090 /* PenPressurizer-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "PenPressurizer-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* PenPressurizer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PenPressurizer.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -49,7 +49,7 @@
 			isa = PBXGroup;
 			children = (
 				D7C7CCA712260583009D2CA8 /* BezierView.applescript */,
-				3B92A9F80F6ED2CB0023785B /* PressureCurveAppDelegate.applescript */,
+				3B92A9F80F6ED2CB0023785B /* PenPressurizerAppDelegate.applescript */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -177,7 +177,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
-				3B92A9F90F6ED2CB0023785B /* PressureCurveAppDelegate.applescript in Sources */,
+				3B92A9F90F6ED2CB0023785B /* PenPressurizerAppDelegate.applescript in Sources */,
 				D7C7CCA812260583009D2CA8 /* BezierView.applescript in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

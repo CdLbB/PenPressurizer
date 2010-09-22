@@ -1,5 +1,5 @@
 //
-// Prefix header for all source files of the 'PressureCurve' target in the 'PressureCurve' project
+// Prefix header for all source files of the 'PenPressurizer' target in the 'PressureCurve' project
 //
 
 #ifdef __OBJC__

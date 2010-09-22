@@ -1,6 +1,6 @@
 --
---  PressureCurveAppDelegate.applescript
---  PressureCurve
+--  PenPressurizerAppDelegate.applescript
+--  PenPressurizer
 --
 --  Created by Eric Nitardy on 8/23/10.
 --  Copyright 2010.
@@ -8,7 +8,7 @@
 global prefFileName
 
 
-script PressureCurveAppDelegate -- NSApp
+script PenPressurizerAppDelegate -- NSApp
 	property parent : class "NSObject"
 	set prefFileName to "com.wacom.pentablet.prefs1"
 	-- IBOutlets
@@ -32,6 +32,8 @@ script PressureCurveAppDelegate -- NSApp
 	on applicationWillFinishLaunching_(aNotification)
 		floatingWindow's setLevel_(1) -- "NSFloatingWindowLevel" = 1
 		--current application's terminate_(current application)
+		
+		(*
 		set prefFileName to "com.wacom.pentablet.prefs"
 		set pLocal to path to preferences from local domain
 		set pUser to path to preferences from user domain
@@ -46,6 +48,7 @@ script PressureCurveAppDelegate -- NSApp
 			end tell
 			quit
 		end if
+		*)
 		
 	end applicationWillFinishLaunching_
 	

@@ -1,9 +1,9 @@
 //
 //  main.m
-//  PressureCurve
+//  PenPressurizer
 //
 //  Created by Eric Nitardy on 8/23/10.
-//  Copyright University of Washington 2010. All rights reserved.
+//  Copyright 2010. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
