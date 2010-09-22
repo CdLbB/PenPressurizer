@@ -11,6 +11,8 @@ property NSAffineTransform : class "NSAffineTransform"
 property NSBezierPath : class "NSBezierPath"
 property NSColor : class "NSColor"
 
+property PenTabletDriverName : "TabletDriver"
+
 script BezierView
 	property parent : class "NSView"
 	
@@ -309,7 +311,7 @@ script BezierView
 	
 	on resetTabletDriver()
 		
-		do shell script "killall " & quoted form of "TabletDriver"
+		do shell script "killall " & quoted form of PenTabletDriverName
 		delay 0.1
 		tell application "TabletDriver" to launch
 		
