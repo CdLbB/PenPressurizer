@@ -1,28 +1,61 @@
+--
 -- BezierView.applescript
 -- PenPressurizer
-
+--
 -- Created by Eric Nitardy on 8/25/10.
--- Copyright 2010.
+-- Copyright 2010. All rights reserved.
+-- See license.txt file for details.
 
-global backgroundColor, gridColor, linesColor, minPress, maxPress, pressLevels, hardness, controlPt, penButton, prefFilePath, prefFileName
+global backgroundColor, gridColor, linesColor, minPress, maxPress, pressLevels, hardness, controlPt, penButton, prefFilePath, prefFileName, PenTabletDriverName
 
-property NSAffineTransform : class "NSAffineTransform"
 --property NSGraphicsContext : class "NSGraphicsContext" 
+property NSAffineTransform : class "NSAffineTransform"
 property NSBezierPath : class "NSBezierPath"
 property NSColor : class "NSColor"
 
-property PenTabletDriverName : "PenTabletDriver"
 
 script BezierView
 	property parent : class "NSView"
 	
+	-- "Stylus Button" popup button
 	property buttonButton : missing value -- NSPopUpButton
+	
+	-- "Button Feel", "Min. Pressure", "Max. Pressure" sliders:
 	property hardnessSlider : missing value -- NSSlider
 	property minPressSlider : missing value
 	property maxPressSlider : missing value
 	
 	
-	on initWithFrame_(frame)
+	on initWithFrame_(frame) -- First handler to run
+		
+		-- Determine tablet driver's correct application name. Two methods provided.
+		-- First if process is running, second if not.
+		tell application "System Events"
+			set tabletDrivers to every process whose (name contains "TabletDriver" and name is not "TabletDriver")
+		end tell
+		if tabletDrivers is {} then
+			-- tablet driver process is not running, so ...
+			try
+				set tabletPath to path to application "TabletDriver"
+				tell application "Finder"
+					set tabletApp to name of folder of folder of folder of tabletPath
+				end tell
+				set PenTabletDriverName to name of application tabletApp
+				tell application PenTabletDriverName to launch
+				
+			on error -- Both methods for finding tablet driver's app name failed, so ...
+				tell current application
+					activate
+					display alert "No TabletDriver running." message "Perhaps this system is not attached to a Wacom Pen Tablet. Nonetheless, this Application cannot launch." as warning
+				end tell
+				current application's NSApp's terminate_(me)
+			end try
+			
+		else -- tablet driver process IS running, so ...
+			set PenTabletDriverName to name of item 1 of tabletDrivers
+		end if
+		
+		-- Find Wacom preferences file. If not found, display error.
 		set prefFileName to "com.wacom.pentablet.prefs"
 		set prefFilePath to getprefFilePath(prefFileName)
 		if prefFilePath is "not found" then
@@ -35,79 +68,96 @@ script BezierView
 		
 		continue initWithFrame_(frame)
 		
+		-- Set Bézier view's colors
 		set backgroundColor to NSColor's whiteColor
 		set gridColor to NSColor's blackColor
 		set linesColor to NSColor's blueColor
 		return me
 	end initWithFrame_
 	
-	on awakeFromNib()
+	on awakeFromNib() -- Second handler to run
 		
-		preparePenPrefFile()
+		preparePenPrefFile() -- Make tmp files to speed sed's pref file changes
 		
+		-- Using "Styus Button" value, find controlPt in pref file
+		-- Then using controlPt, determine hardness, minPress, maxPress.
 		set penButton to (buttonButton's titleOfSelectedItem) as string
 		getControlPtFromPenPref(penButton)
 		controlPtToHardness(controlPt)
+		
+		-- Set sliders to correct hardness, minPress, maxPress.
 		hardnessSlider's setDoubleValue_(hardness)
 		minPressSlider's setDoubleValue_(minPress)
 		maxPressSlider's setDoubleValue_(maxPress)
 	end awakeFromNib
 	
-	
+	-- When"Styus Button" changes,
 	on changeButtonButton_(sender)
 		set penButton0 to (buttonButton's titleOfSelectedItem) as string
 		if penButton ≠ penButton0 then
+			
+			-- Using "Styus Button" value, find controlPt in pref file
+			-- Then using controlPt, determine hardness, minPress, maxPress.
 			set penButton to penButton0
 			preparePenPrefFile()
 			getControlPtFromPenPref(penButton)
 			controlPtToHardness(controlPt)
+			
+			-- Set sliders to correct hardness, minPress, maxPress.
 			hardnessSlider's setDoubleValue_(hardness)
 			minPressSlider's setDoubleValue_(minPress)
 			maxPressSlider's setDoubleValue_(maxPress)
-			my setNeedsDisplay_(true)
+			my setNeedsDisplay_(true) -- refresh display
 		end if
 	end changeButtonButton_
 	
+	-- When"Min. Pressure" slider changes,
 	on changeminPressSlider_(sender)
 		set minPress0 to sender's doubleValue()
 		if minPress0 ≠ minPress then
 			set minPress to minPress0
-			if minPress + 5 > maxPress then
+			if minPress + 5 > maxPress then -- keep Max. Pressure >> Min. Pressure
 				set maxPress to minPress + 5
 				maxPressSlider's setDoubleValue_(maxPress)
 			end if
-			my setNeedsDisplay_(true)
+			my setNeedsDisplay_(true) -- refresh display
 		end if
 	end changeminPressSlider_
 	
+	-- When"Max. Pressure" slider changes,
 	on changemaxPressSlider_(sender)
 		set maxPress0 to sender's doubleValue()
 		if maxPress0 ≠ maxPress then
 			set maxPress to maxPress0
-			if maxPress < 5 then
+			if maxPress < 5 then -- keep Max. Pressure >> 0
 				set maxPress to 5
 				maxPressSlider's setDoubleValue_(maxPress)
 			end if
-			if minPress + 5 > maxPress then
+			if minPress + 5 > maxPress then -- keep Max. Pressure >> Min. Pressure
 				set minPress to maxPress - 5
 				minPressSlider's setDoubleValue_(minPress)
 			end if
-			my setNeedsDisplay_(true)
+			my setNeedsDisplay_(true) -- refresh display
 		end if
 	end changemaxPressSlider_
 	
+	-- When"Button Feel" (hardness) slider changes,
 	on changehardnessSlider_(sender)
 		set hardness0 to sender's doubleValue()
 		if hardness ≠ hardness0 then
 			set hardness to hardness0
 			hardnessToControlPt(hardness)
-			my setNeedsDisplay_(true)
+			my setNeedsDisplay_(true) -- refresh display
 		end if
 	end changehardnessSlider_
 	
+	---- Info on Wacom's preset control points (0 - 6) ----
 	(*
 			Wacom Control Points for Pen's Quadratic Bézier Curve
+			[Control pt. is 2nd of the 3 points of a Quadratic Bézier Curve]
+			[Control pt. is normalized to a 0 to 100 range]
 			[going from soft (0) to firm (6)]
+			
 
 			0th controlPt : {x:0, y:100} -- dist from y=x :-70.72
 
@@ -127,6 +177,10 @@ script BezierView
 			range of Bézier curves for 0≤hardness≤7.]
 	*)
 	
+	-- When the "Min. Pressure" Default button is pushed,
+	-- set "Min. Pressure" to Wacom's preset based on hardness.
+	-- hardness 0 - 6: minPress 4.9, 5.88, 6.86, 7.48, 10, 14.9, 20
+	-- linearly connected to create a continuous range
 	on pushDefaultButton_(sender) -- NSButton
 		if hardness < 1 then
 			set minPress to 4.9 * (1 - hardness) + 5.88 * (hardness - 0)
@@ -142,9 +196,12 @@ script BezierView
 			set minPress to 14.9 * (6 - hardness) + 20 * (hardness - 5)
 		end if
 		minPressSlider's setDoubleValue_(minPress)
-		my setNeedsDisplay_(true)
+		my setNeedsDisplay_(true) -- refresh display
 	end pushDefaultButton_
 	
+	-- Convert hardness into a control point 
+	-- using Wacom's preset control points for hardnesses 0 - 6,
+	-- linearly connected to create a continuous range.
 	on hardnessToControlPt(hardIndex)
 		if hardIndex < 1 then
 			set controlPtX to 0 * (1 - hardIndex) + 11.67 * (hardIndex - 0)
@@ -170,6 +227,9 @@ script BezierView
 		
 	end hardnessToControlPt
 	
+	-- Convert a control point into a hardness 
+	-- using Wacom's preset control points for hardnesses 0 - 6,
+	-- linearly connected to create a continuous range.
 	on controlPtToHardness(pt)
 		set dist to ((pt's x) - (pt's y)) * (2 ^ (-0.5))
 		if dist < -50.54 then
@@ -189,6 +249,8 @@ script BezierView
 		if hardness < 0 then set hardness to 0
 	end controlPtToHardness
 	
+	
+	-- ReDraw Bézier view
 	on drawRect_(dirtyRect)
 		
 		set |bounds| to my |bounds|()
@@ -196,14 +258,18 @@ script BezierView
 		set emptySpace to 10
 		
 		--set currentContext to NSGraphicsContext's currentContext
-		--set |rotation| to NSAffineTransform's transform
+		
+		--Make translation a NSAffineTransform type object
 		set translation to NSAffineTransform's transform
 		
+		-- rControlPt: ControlPt adjusted for range between minPress and maxPress
 		set theRange to (maxPress - minPress) / 100
 		set rControlPt to ¬
 			{x:(controlPt's x) * theRange + minPress, y:(controlPt's y)}
+		-- vControlPt: effective on screen ControlPt — view 200 px (+) wide
 		set vControlPt to {x:(rControlPt's x) * 2, y:(rControlPt's y) * 2}
 		
+		-- Draw background
 		set thePath to NSBezierPath's bezierPathWithRect_(|bounds|)
 		thePath's setLineWidth_(0.5)
 		thePath's stroke()
@@ -211,6 +277,7 @@ script BezierView
 		thePath's fill()
 		thePath's release()
 		
+		-- Draw x(Pen Pressure) and y(Tablet Response) axes  
 		gridColor's |set|()
 		thePath's setLineWidth_(0.75)
 		thePath's moveToPoint_({x:2, y:0})
@@ -220,6 +287,7 @@ script BezierView
 		thePath's stroke()
 		thePath's release()
 		
+		-- Draw Max pressure and Max response grid lines
 		thePath's setLineWidth_(0.5)
 		thePath's moveToPoint_({x:202, y:0})
 		thePath's lineToPoint_({x:202, y:220})
@@ -228,29 +296,40 @@ script BezierView
 		thePath's stroke()
 		thePath's release()
 		
+		-- Draw Pressure-Response curve
 		linesColor's |set|()
 		set thePath to NSBezierPath's bezierPath
 		thePath's moveToPoint_({x:0, y:0})
-		thePath's lineToPoint_({x:(minPress * 2) as integer, y:0})
+		thePath's lineToPoint_({x:(minPress * 2) as integer, y:0}) -- to minpress flat
 		thePath's ¬
-			curveToPoint_controlPoint1_controlPoint2_({x:(maxPress * 2) as integer, y:200}, vControlPt, vControlPt)
-		thePath's lineToPoint_({x:250, y:200})
-		thePath's setLineCapStyle_(1)
+			curveToPoint_controlPoint1_controlPoint2_({x:(maxPress * 2) as integer, y:200}, vControlPt, vControlPt) -- curve from minpress to maxpress
+		thePath's lineToPoint_({x:250, y:200}) -- from maxpress flat
+		thePath's setLineCapStyle_(1) -- I'm puzzled by the effect of changing this
 		thePath's setLineWidth_(3)
+		
+		-- True origin for pressure curve is (2, 2) — see axes above
 		translation's translateXBy_yBy_(2, 2)
 		translation's concat()
 		thePath's stroke()
 		thePath's release()
 		
+		-- pControlPt: effective pref file ControlPt
+		-- adjusted for actual tablet pressure sensitivity (pressLevels)
 		set pControlPt to ¬
 			{x:((rControlPt's x) / 100 * pressLevels) as integer, y:((rControlPt's y) / 100 * pressLevels) as integer}
+		-- pMinPress, pMinPress: effective pref file values
+		-- adjusted for actual tablet pressure sensitivity (pressLevels)
 		set pMinPress to (minPress / 100 * pressLevels) as integer
 		set pMaxPress to (maxPress / 100 * pressLevels) as integer
+		-- Adjust PressureCurveControlPoint, LowerPressureThreshold and
+		-- UpperPressureThreshold in pen preferences file based on new values of
+		-- pMinPress, pMaxPress, pControlPt
 		setcontrolPtInPrefFile(pMinPress, pMaxPress, pControlPt)
-		
 		
 	end drawRect_
 	
+	-- Find Wacom preferences file. If not found, return "not found"
+	-- otherwise return path to file.
 	on getprefFilePath(fileName)
 		set pLocal to path to preferences from local domain
 		set pUser to path to preferences from user domain
@@ -268,19 +347,33 @@ script BezierView
 		return pFilePath
 	end getprefFilePath
 	
+	-- Create new temp file of pen preferences file ("new2")
+	-- with line endings translated from Mac to Unix
+	-- Part of prep for speeding up sed
 	on preparePenPrefFile()
 		set tempFile to (POSIX path of (path to temporary items)) & "new2"
 		do shell script ¬
 			"/bin/cat " & quoted form of prefFilePath & " | /usr/bin/tr \"\\r\" \"\\n\" >" & tempFile
 	end preparePenPrefFile
 	
+	-- Use sed on "new2" temp file to find controlPtData and pressLevelData
+	-- for chosen stylus button (tip or eraser)
+	-- Then use sed to put markers in new temp file ("new3") 
+	-- where data needs to be placed. This file has Mac line endings
+	-- and is used with sed to quickly insert new data into pen pref file.
 	on getControlPtFromPenPref(buttonName)
 		set tempFile to (POSIX path of (path to temporary items)) & "new2"
 		set tempFile1 to (POSIX path of (path to temporary items)) & "new3"
+		-- Find in file 1st "PressureCurveControlPoint" after button name
+		-- and extract controlPtData
 		set controlPtData to do shell script ¬
 			"/usr/bin/sed -n '/ButtonName " & buttonName & "/,/PressureCurveControlPoint/ s_\\(PressureCurveControlPoint [0-9][0-9]* [0-9][0-9]* [0-9][0-9]* [0-9][0-9]* [0-9][0-9]* [0-9][0-9]*\\)_\\1_p' " & tempFile
+		-- Find in file 1st "PressureResolution" after button name
+		-- and extract pressLevelData
 		set pressLevelData to do shell script ¬
 			"/usr/bin/sed -n '/ButtonName " & buttonName & "/,/PressureResolution/ s_\\(PressureResolution [0-9][0-9]*\\)_\\1_p' " & tempFile
+		-- Calculate variables with data 
+		-- mostly 0 - 100 normalization based on pressLevels
 		set pressLevels to (word 2 of pressLevelData) as integer
 		set minPress to ((word 2 of controlPtData) as integer) / pressLevels * 100
 		set maxPress to ((word 6 of controlPtData) as integer) / pressLevels * 100
@@ -288,31 +381,55 @@ script BezierView
 		set controlPtX to ((word 4 of controlPtData) as integer) / pressLevels * 100
 		set controlPtY to ((word 5 of controlPtData) as integer) / pressLevels * 100
 		set controlPt to {x:(controlPtX - minPress) / theRange, y:controlPtY}
+		-- Insert markers in new Mac line ending file ("new3")
+		-- where sed will insert data for changed pref file.
+		-- Three sed substitutions.
 		do shell script ¬
 			"/usr/bin/sed -e '/ButtonName " & buttonName & "/,/PressureCurveControlPoint/ s_\\(PressureCurveControlPoint\\) [0-9][0-9]* [0-9][0-9]* [0-9][0-9]* [0-9][0-9]* [0-9][0-9]* [0-9][0-9]*_\\1 --controlPt goes here--_'  -e '/ButtonName " & buttonName & "/,/UpperPressureThreshold/ s_\\(UpperPressureThreshold\\) [0-9][0-9]*_\\1 --minPressHi goes here--_' -e '/ButtonName " & buttonName & "/,/LowerPressureThreshold/ s_\\(LowerPressureThreshold\\) [0-9][0-9]*_\\1 --minPressLo goes here--_' " & tempFile & " | /usr/bin/tr \"\\n\" \"\\r\" > " & tempFile1
 		
 	end getControlPtFromPenPref
 	
+	-- Adjust PressureCurveControlPoint, LowerPressureThreshold and
+	-- UpperPressureThreshold in pen preferences file based on new values of
+	-- pMinPress, pMaxPress, pControlPt	
 	on setcontrolPtInPrefFile(pMinPress, pMaxPress, pControlPt)
 		set tempFile1 to (POSIX path of (path to temporary items)) & "new3"
 		set tempFile2 to prefFilePath
+		
+		---- Convert variable values to strings --
 		set sPressLevels to pressLevels as string
-		if pMinPress ≤ 3 then set pMinPress to 4
+		if pMinPress ≤ 3 then set pMinPress to 4 -- minimum value
 		set sMinPress to pMinPress as string
+		-- keep LowerPressureThreshold & UpperPressureThreshold three apart
 		set sMinPressHi to (pMinPress + 1) as string
 		set sMinPressLo to (pMinPress - 2) as string
 		set sMaxPress to pMaxPress as string
 		set sPtX to pControlPt's x as string
 		set sPtY to pControlPt's y as string
+		
+		-- Insert data at marker locations in Mac line ending file ("new3")
+		-- and result is streamed into Wacom pen preferences file.
+		-- Three sed substitutions.
 		do shell script ¬
 			"/usr/bin/sed -e 's_--controlPt goes here--_" & sMinPress & " 0 " & sPtX & " " & sPtY & " " & sMaxPress & " " & sPressLevels & "_' -e 's_--minPressHi goes here--_" & sMinPressHi & "_' -e 's_--minPressLo goes here--_" & sMinPressLo & "_' " & tempFile1 & " > " & tempFile2
-		resetTabletDriver()
+		resetTabletDriver() -- force tablet driver to use new preferences data
 	end setcontrolPtInPrefFile
 	
+	
+	-- This handler is a fairly unsophisticated approach to getting the driver to
+	-- recognize settings changes, but it's the best I've got so far.
+	-- When "Button Feel" (hardness) slider, is re-adjusted repeatedly
+	-- and in quick sucession, the driver can freeze or behave oddly.
+	-- Force quitting the driver or hitting the Modbook reset button fixes this.
 	on resetTabletDriver()
-		
-		do shell script "killall " & quoted form of PenTabletDriverName
-		delay 0.1
+		try
+			do shell script "killall " & quoted form of PenTabletDriverName
+		on error
+			try
+				do shell script "killall -9 " & quoted form of PenTabletDriverName
+			end try
+		end try
+		delay 0.2
 		tell application PenTabletDriverName to launch
 		
 	end resetTabletDriver

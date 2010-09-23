@@ -4,7 +4,7 @@
 //
 //  Created by Eric Nitardy on 8/23/10.
 //  Copyright 2010. All rights reserved.
-//
+//	See license.txt file for details.
 
 #import <Cocoa/Cocoa.h>
 //#import <AppKit/NSGraphicsContext.h>
