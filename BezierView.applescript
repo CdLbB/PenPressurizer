@@ -36,7 +36,8 @@ script BezierView
 		if tabletDrivers is {} then
 			-- tablet driver process is not running, so ...
 			try
-				set tabletPath to path to application "TabletDriver"
+				set AppScriptDriver to "TabletDriver"
+				set tabletPath to path to application AppScriptDriver
 				tell application "Finder"
 					set tabletApp to name of folder of folder of folder of tabletPath
 				end tell
