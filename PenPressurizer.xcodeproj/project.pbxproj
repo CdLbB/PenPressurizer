@@ -149,7 +149,14 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "PenPressurizer" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* PressureCurve */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -233,6 +240,7 @@
 				GCC_PREFIX_HEADER = PenPressurizer_Prefix.pch;
 				INFOPLIST_FILE = "PenPressurizer-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
+				OSACOMPILE_EXECUTE_ONLY = NO;
 				PRODUCT_NAME = PenPressurizer;
 			};
 			name = Release;

@@ -13,7 +13,7 @@
 	<key>CFBundleExecutable</key>
 	<string>PenPressurizer</string>
 	<key>CFBundleGetInfoString</key>
-	<string>PenPressurizer, version 0.5, Copyright © 2010, Eric Nitardy.</string>
+	<string>PenPressurizer, version 0.5. Copyright © 2010, Eric Nitardy.</string>
 	<key>CFBundleDisplayName</key>
 	<string></string>
 	<key>CFBundleIconFile</key>

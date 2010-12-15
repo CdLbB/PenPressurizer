@@ -4,7 +4,7 @@ PenPressurizer is a simple utility for the Mac that provides improved control ov
 
 How does it do that?
 --------------------
-It does that by providing more fine gained control over the pen's apparent hardness than is provided by Wacom's preference settings as well as allowing you to adjust both the minimum pressure required to get the tablet to respond and the pressure required to get maximum tablet response.
+It does that by providing more fine-grained control over the pen's apparent hardness than is provided by Wacom's preference settings as well as allowing you to adjust both the minimum pressure required to get the tablet to respond and the pressure required to get maximum tablet response.
 
 ![PenPressurizerWindow][]
 
